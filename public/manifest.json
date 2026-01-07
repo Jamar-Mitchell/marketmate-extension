@@ -1,0 +1,51 @@
+{
+  "manifest_version": 3,
+  "name": "MarketMate",
+  "version": "0.1.0",
+  "description": "Automate price negotiation on Facebook Marketplace",
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://www.facebook.com/*",
+    "https://www.messenger.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.facebook.com/marketplace/*"],
+      "js": ["contentScript.js"],
+      "css": ["assets/content.css"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://www.messenger.com/*"],
+      "js": ["messengerScript.js"],
+      "css": ["assets/messenger.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup/index.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["assets/*"],
+      "matches": ["https://www.facebook.com/*", "https://www.messenger.com/*"]
+    }
+  ]
+}

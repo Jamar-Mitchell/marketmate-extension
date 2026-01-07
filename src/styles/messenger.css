@@ -1,0 +1,215 @@
+/* MarketMate - Messenger Overlay Styles */
+
+.mm-overlay {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  margin-bottom: 8px;
+  background: var(--mm-bg, #ffffff);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  color: var(--mm-text, #1c1e21);
+  z-index: 9999;
+  overflow: hidden;
+  animation: mm-slide-up 0.2s ease-out;
+}
+
+@keyframes mm-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mm-overlay-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #0866ff 0%, #0756d4 100%);
+  color: white;
+}
+
+.mm-overlay-title {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.mm-overlay-close {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.mm-overlay-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.mm-overlay-content {
+  padding: 16px;
+}
+
+.mm-suggestion-text {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--mm-text, #1c1e21);
+  background: var(--mm-bg-secondary, #f0f2f5);
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.mm-overlay-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 12px;
+}
+
+.mm-confidence {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.mm-confidence-high {
+  background: #e7f5e9;
+  color: #31a24c;
+}
+
+.mm-confidence-medium {
+  background: #fff8e6;
+  color: #f7b928;
+}
+
+.mm-confidence-low {
+  background: #fef2f2;
+  color: #e4405f;
+}
+
+.mm-acceptance-chance {
+  color: var(--mm-text-secondary, #65676b);
+}
+
+.mm-overlay-actions {
+  display: flex;
+  gap: 12px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--mm-border, #dddfe2);
+  background: var(--mm-bg-secondary, #f0f2f5);
+}
+
+.mm-overlay-actions .mm-btn {
+  flex: 1;
+}
+
+/* Edit mode */
+.mm-edit-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mm-edit-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--mm-border, #dddfe2);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.mm-edit-textarea:focus {
+  outline: none;
+  border-color: var(--mm-primary, #0866ff);
+  box-shadow: 0 0 0 2px rgba(8, 102, 255, 0.2);
+}
+
+.mm-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.mm-btn-small {
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+/* Counter offer specific styles */
+.mm-counter-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #fff8e6;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.mm-counter-amount {
+  font-weight: 600;
+  color: #f7b928;
+}
+
+/* Walk away styles */
+.mm-walkaway-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #fef2f2;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: #e4405f;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .mm-overlay {
+    position: fixed;
+    bottom: auto;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 400px;
+    margin-bottom: 0;
+  }
+  
+  @keyframes mm-slide-up {
+    from {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+  }
+}
