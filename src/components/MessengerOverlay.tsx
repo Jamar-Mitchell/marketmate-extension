@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import type { SuggestedMessage } from '../../types';
+import React, { useState } from "react";
+import type { SuggestedMessage } from "../types";
 
 interface MessengerOverlayProps {
   suggestion: SuggestedMessage | null;
@@ -17,7 +17,7 @@ export const MessengerOverlay: React.FC<MessengerOverlayProps> = ({
   onDismiss,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [editedText, setEditedText] = useState(suggestion?.text || '');
+  const [editedText, setEditedText] = useState(suggestion?.text || "");
 
   if (!suggestion) return null;
 
@@ -33,38 +33,42 @@ export const MessengerOverlay: React.FC<MessengerOverlayProps> = ({
 
   const getConfidenceClass = () => {
     switch (suggestion.confidence) {
-      case 'high': return 'mm-confidence-high';
-      case 'medium': return 'mm-confidence-medium';
-      case 'low': return 'mm-confidence-low';
-      default: return '';
+      case "high":
+        return "mm-confidence-high";
+      case "medium":
+        return "mm-confidence-medium";
+      case "low":
+        return "mm-confidence-low";
+      default:
+        return "";
     }
   };
 
   const getHeaderText = () => {
     switch (suggestion.type) {
-      case 'initial':
-        return '💬 MarketMate Suggestion';
-      case 'counter':
-        return sellerCounter 
-          ? `Seller Countered: $${sellerCounter}` 
-          : '💬 Counter Offer';
-      case 'accept':
-        return '✅ Accept Offer';
-      case 'walkaway':
-        return '👋 Walk Away';
+      case "initial":
+        return "💬 MarketMate Suggestion";
+      case "counter":
+        return sellerCounter
+          ? `Seller Countered: $${sellerCounter}`
+          : "💬 Counter Offer";
+      case "accept":
+        return "✅ Accept Offer";
+      case "walkaway":
+        return "👋 Walk Away";
       default:
-        return '💬 MarketMate';
+        return "💬 MarketMate";
     }
   };
 
   const getActionButtonText = () => {
     switch (suggestion.type) {
-      case 'walkaway':
-        return 'Send & End Negotiation';
-      case 'accept':
-        return 'Accept & Send';
+      case "walkaway":
+        return "Send & End Negotiation";
+      case "accept":
+        return "Accept & Send";
       default:
-        return 'Send';
+        return "Send";
     }
   };
 
@@ -72,8 +76,8 @@ export const MessengerOverlay: React.FC<MessengerOverlayProps> = ({
     <div className="mm-overlay" data-testid="mm-overlay">
       <div className="mm-overlay-header">
         <span className="mm-overlay-title">{getHeaderText()}</span>
-        <button 
-          className="mm-overlay-close" 
+        <button
+          className="mm-overlay-close"
           onClick={onDismiss}
           aria-label="Dismiss"
           data-testid="mm-overlay-close"
@@ -81,7 +85,7 @@ export const MessengerOverlay: React.FC<MessengerOverlayProps> = ({
           ×
         </button>
       </div>
-      
+
       <div className="mm-overlay-content">
         {isEditing ? (
           <div className="mm-edit-container">
@@ -94,13 +98,13 @@ export const MessengerOverlay: React.FC<MessengerOverlayProps> = ({
               data-testid="mm-edit-textarea"
             />
             <div className="mm-edit-actions">
-              <button 
+              <button
                 className="mm-btn mm-btn-secondary mm-btn-small"
                 onClick={() => setIsEditing(false)}
               >
                 Cancel
               </button>
-              <button 
+              <button
                 className="mm-btn mm-btn-primary mm-btn-small"
                 onClick={handleSave}
                 data-testid="mm-save-edit"
@@ -114,31 +118,44 @@ export const MessengerOverlay: React.FC<MessengerOverlayProps> = ({
             <p className="mm-suggestion-text" data-testid="mm-suggestion-text">
               "{suggestion.text}"
             </p>
-            
+
             <div className="mm-overlay-meta">
-              <span className={`mm-confidence ${getConfidenceClass()}`} data-testid="mm-confidence">
-                Confidence: {suggestion.confidence.charAt(0).toUpperCase() + suggestion.confidence.slice(1)}
+              <span
+                className={`mm-confidence ${getConfidenceClass()}`}
+                data-testid="mm-confidence"
+              >
+                Confidence:{" "}
+                {suggestion.confidence.charAt(0).toUpperCase() +
+                  suggestion.confidence.slice(1)}
               </span>
-              {suggestion.type === 'counter' && (
-                <span className="mm-acceptance-chance" data-testid="mm-acceptance">
-                  Acceptance Chance: {suggestion.confidence === 'high' ? 'Good' : suggestion.confidence === 'medium' ? 'Medium' : 'Low'}
+              {suggestion.type === "counter" && (
+                <span
+                  className="mm-acceptance-chance"
+                  data-testid="mm-acceptance"
+                >
+                  Acceptance Chance:{" "}
+                  {suggestion.confidence === "high"
+                    ? "Good"
+                    : suggestion.confidence === "medium"
+                    ? "Medium"
+                    : "Low"}
                 </span>
               )}
             </div>
           </>
         )}
       </div>
-      
+
       {!isEditing && (
         <div className="mm-overlay-actions">
-          <button 
+          <button
             className="mm-btn mm-btn-secondary"
             onClick={handleEdit}
             data-testid="mm-edit-btn"
           >
             Edit
           </button>
-          <button 
+          <button
             className="mm-btn mm-btn-primary"
             onClick={onSend}
             data-testid="mm-send-suggestion"

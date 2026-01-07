@@ -23,20 +23,20 @@ export interface PriceAnalysis {
   fairValueMin: number;
   fairValueMax: number;
   recommendedOffer: number;
-  flexibility: 'low' | 'medium' | 'high';
+  flexibility: "low" | "medium" | "high";
   confidenceScore: number;
   factors: PriceFactor[];
 }
 
 export interface PriceFactor {
   name: string;
-  impact: 'positive' | 'negative' | 'neutral';
+  impact: "positive" | "negative" | "neutral";
   description: string;
   weight: number;
 }
 
-export type NegotiationStyle = 'polite' | 'neutral' | 'firm';
-export type AutomationLevel = 'suggest-only' | 'one-click-send';
+export type NegotiationStyle = "polite" | "neutral" | "firm";
+export type AutomationLevel = "suggest-only" | "one-click-send";
 
 export interface UserPreferences {
   maxSpend: number;
@@ -45,15 +45,15 @@ export interface UserPreferences {
   mockMode: boolean;
 }
 
-export type NegotiationState = 
-  | 'INIT'
-  | 'OFFER_SENT'
-  | 'AWAITING_RESPONSE'
-  | 'COUNTER_RECEIVED'
-  | 'COUNTER_SENT'
-  | 'ACCEPTED'
-  | 'REJECTED'
-  | 'WALKED_AWAY';
+export type NegotiationState =
+  | "INIT"
+  | "OFFER_SENT"
+  | "AWAITING_RESPONSE"
+  | "COUNTER_RECEIVED"
+  | "COUNTER_SENT"
+  | "ACCEPTED"
+  | "REJECTED"
+  | "WALKED_AWAY";
 
 export interface NegotiationSession {
   id: string;
@@ -84,8 +84,8 @@ export interface NegotiationMessage {
 
 export interface SuggestedMessage {
   text: string;
-  type: 'initial' | 'counter' | 'accept' | 'walkaway';
-  confidence: 'high' | 'medium' | 'low';
+  type: "initial" | "counter" | "accept" | "walkaway";
+  confidence: "high" | "medium" | "low";
   offerAmount?: number;
 }
 
@@ -101,13 +101,13 @@ export interface ExtensionState {
 
 // Message types for communication between content script and background
 export type MessageType =
-  | 'GET_LISTING_DATA'
-  | 'ANALYZE_PRICE'
-  | 'GENERATE_MESSAGE'
-  | 'SEND_MESSAGE'
-  | 'UPDATE_PREFERENCES'
-  | 'GET_STATE'
-  | 'UPDATE_NEGOTIATION_STATE';
+  | "GET_LISTING_DATA"
+  | "ANALYZE_PRICE"
+  | "GENERATE_MESSAGE"
+  | "SEND_MESSAGE"
+  | "UPDATE_PREFERENCES"
+  | "GET_STATE"
+  | "UPDATE_NEGOTIATION_STATE";
 
 export interface ExtensionMessage {
   type: MessageType;

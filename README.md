@@ -84,12 +84,15 @@ marketmate-extension/
 ## How It Works
 
 ### 1. Listing Analysis
+
 When you visit a Facebook Marketplace listing, MarketMate:
+
 - Extracts price, title, description, and seller info from the DOM
 - Analyzes listing age, condition keywords, and urgency indicators
 - Calculates a fair value range based on multiple pricing factors
 
 ### 2. Price Estimation Factors
+
 - **Time on Market** - Older listings = more negotiation room
 - **Condition** - Keywords affect value estimation
 - **Urgency Indicators** - "Must sell", "Moving", etc.
@@ -97,12 +100,14 @@ When you visit a Facebook Marketplace listing, MarketMate:
 - **Price Psychology** - Round prices often have more wiggle room
 
 ### 3. Negotiation Assistance
+
 - Choose your style: Polite / Neutral / Firm
 - Set your maximum price
 - Get AI-suggested messages
 - Track negotiation state
 
 ### 4. Safety Features
+
 - User-triggered sends only (no auto-messaging)
 - Clear visual indicators
 - State tracking to prevent over-messaging
@@ -111,31 +116,35 @@ When you visit a Facebook Marketplace listing, MarketMate:
 
 ### User Preferences
 
-| Option | Description | Default |
-|--------|-------------|---------|
-| Max Spend | Your maximum budget | Fair value max |
-| Style | Negotiation tone | Polite |
-| Automation | Suggest-only or one-click | Suggest-only |
-| Mock Mode | Use test data | Off |
+| Option     | Description               | Default        |
+| ---------- | ------------------------- | -------------- |
+| Max Spend  | Your maximum budget       | Fair value max |
+| Style      | Negotiation tone          | Polite         |
+| Automation | Suggest-only or one-click | Suggest-only   |
+| Mock Mode  | Use test data             | Off            |
 
 ## Testing
 
 ### Unit Tests (Vitest)
+
 ```bash
 npm test
 ```
 
 Tests cover:
+
 - Pricing engine calculations
 - Negotiation state machine
 - Message generation
 
 ### E2E Tests (Playwright)
+
 ```bash
 npm run test:e2e
 ```
 
 Tests cover:
+
 - Panel expand/collapse
 - Price analysis display
 - Style selection
@@ -147,7 +156,7 @@ Tests cover:
 ### Pricing Engine
 
 ```typescript
-import { analyzePricing } from './engine/pricingEngine';
+import { analyzePricing } from "./engine/pricingEngine";
 
 const analysis = analyzePricing(listingData);
 // Returns: { fairValueMin, fairValueMax, recommendedOffer, flexibility, factors }
@@ -156,10 +165,10 @@ const analysis = analyzePricing(listingData);
 ### Negotiation Engine
 
 ```typescript
-import { createSession, generateMessage } from './engine/negotiationEngine';
+import { createSession, generateMessage } from "./engine/negotiationEngine";
 
 const session = createSession(listingId, initialOffer, maxPrice);
-const suggestion = generateMessage('initial', 'polite', 180);
+const suggestion = generateMessage("initial", "polite", 180);
 ```
 
 ## Roadmap

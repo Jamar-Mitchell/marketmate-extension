@@ -1,8 +1,8 @@
 // Test server for E2E tests - serves mock Facebook Marketplace and Messenger pages
 
-import { createServer } from 'http';
-import { readFileSync, existsSync } from 'fs';
-import { join } from 'path';
+import { createServer } from "http";
+import { readFileSync, existsSync } from "fs";
+import { join } from "path";
 
 const PORT = 3000;
 
@@ -134,39 +134,39 @@ const mockMessengerPage = `
 
 const server = createServer((req, res) => {
   const url = new URL(req.url!, `http://localhost:${PORT}`);
-  
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  
-  if (req.method === 'OPTIONS') {
+
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  if (req.method === "OPTIONS") {
     res.writeHead(200);
     res.end();
     return;
   }
-  
+
   switch (url.pathname) {
-    case '/':
-    case '/mock-marketplace':
-    case '/marketplace/item/123456789':
-      res.writeHead(200, { 'Content-Type': 'text/html' });
+    case "/":
+    case "/mock-marketplace":
+    case "/marketplace/item/123456789":
+      res.writeHead(200, { "Content-Type": "text/html" });
       res.end(mockMarketplacePage);
       break;
-      
-    case '/mock-messenger':
-      res.writeHead(200, { 'Content-Type': 'text/html' });
+
+    case "/mock-messenger":
+      res.writeHead(200, { "Content-Type": "text/html" });
       res.end(mockMessengerPage);
       break;
-      
+
     default:
-      res.writeHead(404, { 'Content-Type': 'text/plain' });
-      res.end('Not Found');
+      res.writeHead(404, { "Content-Type": "text/plain" });
+      res.end("Not Found");
   }
 });
 
 server.listen(PORT, () => {
   console.log(`Test server running at http://localhost:${PORT}`);
-  console.log('Available routes:');
-  console.log('  /mock-marketplace - Mock Facebook Marketplace listing');
-  console.log('  /mock-messenger   - Mock Messenger conversation');
+  console.log("Available routes:");
+  console.log("  /mock-marketplace - Mock Facebook Marketplace listing");
+  console.log("  /mock-messenger   - Mock Messenger conversation");
 });

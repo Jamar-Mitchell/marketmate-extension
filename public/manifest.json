@@ -3,10 +3,7 @@
   "name": "MarketMate",
   "version": "0.1.0",
   "description": "Automate price negotiation on Facebook Marketplace",
-  "permissions": [
-    "storage",
-    "activeTab"
-  ],
+  "permissions": ["storage", "activeTab"],
   "host_permissions": [
     "https://www.facebook.com/*",
     "https://www.messenger.com/*"

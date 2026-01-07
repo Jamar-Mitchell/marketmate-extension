@@ -1,203 +1,204 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MarketMate</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    body {
-      width: 320px;
-      min-height: 200px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      font-size: 14px;
-      color: #1c1e21;
-      background: #ffffff;
-    }
-    
-    .popup-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 16px;
-      background: linear-gradient(135deg, #0866ff 0%, #0756d4 100%);
-      color: white;
-    }
-    
-    .popup-logo {
-      font-size: 24px;
-    }
-    
-    .popup-title {
-      font-size: 18px;
-      font-weight: 600;
-    }
-    
-    .popup-subtitle {
-      font-size: 12px;
-      opacity: 0.9;
-    }
-    
-    .popup-content {
-      padding: 16px;
-    }
-    
-    .popup-section {
-      margin-bottom: 16px;
-    }
-    
-    .popup-section-title {
-      font-weight: 600;
-      margin-bottom: 8px;
-      color: #65676b;
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    
-    .setting-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 0;
-    }
-    
-    .setting-label {
-      font-size: 14px;
-    }
-    
-    .toggle {
-      position: relative;
-      width: 40px;
-      height: 22px;
-    }
-    
-    .toggle input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-    
-    .toggle-slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: #dddfe2;
-      transition: 0.3s;
-      border-radius: 22px;
-    }
-    
-    .toggle-slider:before {
-      position: absolute;
-      content: "";
-      height: 18px;
-      width: 18px;
-      left: 2px;
-      bottom: 2px;
-      background-color: white;
-      transition: 0.3s;
-      border-radius: 50%;
-    }
-    
-    .toggle input:checked + .toggle-slider {
-      background-color: #0866ff;
-    }
-    
-    .toggle input:checked + .toggle-slider:before {
-      transform: translateX(18px);
-    }
-    
-    .status-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
-      border-radius: 16px;
-      font-size: 12px;
-      font-weight: 500;
-    }
-    
-    .status-active {
-      background: #e7f5e9;
-      color: #31a24c;
-    }
-    
-    .status-inactive {
-      background: #f0f2f5;
-      color: #65676b;
-    }
-    
-    .popup-footer {
-      padding: 12px 16px;
-      border-top: 1px solid #dddfe2;
-      text-align: center;
-      font-size: 12px;
-      color: #65676b;
-    }
-    
-    .popup-footer a {
-      color: #0866ff;
-      text-decoration: none;
-    }
-    
-    .popup-footer a:hover {
-      text-decoration: underline;
-    }
-  </style>
-</head>
-<body>
-  <div class="popup-header">
-    <span class="popup-logo">💬</span>
-    <div>
-      <div class="popup-title">MarketMate</div>
-      <div class="popup-subtitle">Marketplace Negotiation Assistant</div>
-    </div>
-  </div>
-  
-  <div class="popup-content">
-    <div class="popup-section">
-      <div class="popup-section-title">Status</div>
-      <div class="status-badge status-inactive" id="status-badge">
-        <span id="status-dot">○</span>
-        <span id="status-text">No active listing</span>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MarketMate</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        width: 320px;
+        min-height: 200px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        font-size: 14px;
+        color: #1c1e21;
+        background: #ffffff;
+      }
+
+      .popup-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 16px;
+        background: linear-gradient(135deg, #0866ff 0%, #0756d4 100%);
+        color: white;
+      }
+
+      .popup-logo {
+        font-size: 24px;
+      }
+
+      .popup-title {
+        font-size: 18px;
+        font-weight: 600;
+      }
+
+      .popup-subtitle {
+        font-size: 12px;
+        opacity: 0.9;
+      }
+
+      .popup-content {
+        padding: 16px;
+      }
+
+      .popup-section {
+        margin-bottom: 16px;
+      }
+
+      .popup-section-title {
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #65676b;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .setting-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+      }
+
+      .setting-label {
+        font-size: 14px;
+      }
+
+      .toggle {
+        position: relative;
+        width: 40px;
+        height: 22px;
+      }
+
+      .toggle input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+
+      .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #dddfe2;
+        transition: 0.3s;
+        border-radius: 22px;
+      }
+
+      .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 2px;
+        bottom: 2px;
+        background-color: white;
+        transition: 0.3s;
+        border-radius: 50%;
+      }
+
+      .toggle input:checked + .toggle-slider {
+        background-color: #0866ff;
+      }
+
+      .toggle input:checked + .toggle-slider:before {
+        transform: translateX(18px);
+      }
+
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 16px;
+        font-size: 12px;
+        font-weight: 500;
+      }
+
+      .status-active {
+        background: #e7f5e9;
+        color: #31a24c;
+      }
+
+      .status-inactive {
+        background: #f0f2f5;
+        color: #65676b;
+      }
+
+      .popup-footer {
+        padding: 12px 16px;
+        border-top: 1px solid #dddfe2;
+        text-align: center;
+        font-size: 12px;
+        color: #65676b;
+      }
+
+      .popup-footer a {
+        color: #0866ff;
+        text-decoration: none;
+      }
+
+      .popup-footer a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="popup-header">
+      <span class="popup-logo">💬</span>
+      <div>
+        <div class="popup-title">MarketMate</div>
+        <div class="popup-subtitle">Marketplace Negotiation Assistant</div>
       </div>
     </div>
-    
-    <div class="popup-section">
-      <div class="popup-section-title">Settings</div>
-      
-      <div class="setting-row">
-        <span class="setting-label">Mock Mode (Testing)</span>
-        <label class="toggle">
-          <input type="checkbox" id="mock-mode">
-          <span class="toggle-slider"></span>
-        </label>
+
+    <div class="popup-content">
+      <div class="popup-section">
+        <div class="popup-section-title">Status</div>
+        <div class="status-badge status-inactive" id="status-badge">
+          <span id="status-dot">○</span>
+          <span id="status-text">No active listing</span>
+        </div>
       </div>
-      
-      <div class="setting-row">
-        <span class="setting-label">Auto-suggest Messages</span>
-        <label class="toggle">
-          <input type="checkbox" id="auto-suggest" checked>
-          <span class="toggle-slider"></span>
-        </label>
+
+      <div class="popup-section">
+        <div class="popup-section-title">Settings</div>
+
+        <div class="setting-row">
+          <span class="setting-label">Mock Mode (Testing)</span>
+          <label class="toggle">
+            <input type="checkbox" id="mock-mode" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="setting-row">
+          <span class="setting-label">Auto-suggest Messages</span>
+          <label class="toggle">
+            <input type="checkbox" id="auto-suggest" checked />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
       </div>
     </div>
-  </div>
-  
-  <div class="popup-footer">
-    <a href="https://github.com/marketmate" target="_blank">Documentation</a>
-    <span> • </span>
-    <span>v0.1.0</span>
-  </div>
-  
-  <script src="popup.js"></script>
-</body>
+
+    <div class="popup-footer">
+      <a href="https://github.com/marketmate" target="_blank">Documentation</a>
+      <span> • </span>
+      <span>v0.1.0</span>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
 </html>

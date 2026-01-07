@@ -7,17 +7,17 @@ import type {
   SuggestedMessage,
   CounterOffer,
   PriceAnalysis,
-} from '../types';
+} from "../types";
 
 /**
  * State transition rules
  */
 const STATE_TRANSITIONS: Record<NegotiationState, NegotiationState[]> = {
-  INIT: ['OFFER_SENT', 'WALKED_AWAY'],
-  OFFER_SENT: ['AWAITING_RESPONSE'],
-  AWAITING_RESPONSE: ['COUNTER_RECEIVED', 'ACCEPTED', 'REJECTED'],
-  COUNTER_RECEIVED: ['COUNTER_SENT', 'ACCEPTED', 'WALKED_AWAY'],
-  COUNTER_SENT: ['AWAITING_RESPONSE'],
+  INIT: ["OFFER_SENT", "WALKED_AWAY"],
+  OFFER_SENT: ["AWAITING_RESPONSE"],
+  AWAITING_RESPONSE: ["COUNTER_RECEIVED", "ACCEPTED", "REJECTED"],
+  COUNTER_RECEIVED: ["COUNTER_SENT", "ACCEPTED", "WALKED_AWAY"],
+  COUNTER_SENT: ["AWAITING_RESPONSE"],
   ACCEPTED: [],
   REJECTED: [],
   WALKED_AWAY: [],
@@ -26,7 +26,10 @@ const STATE_TRANSITIONS: Record<NegotiationState, NegotiationState[]> = {
 /**
  * Check if state transition is valid
  */
-export function canTransition(from: NegotiationState, to: NegotiationState): boolean {
+export function canTransition(
+  from: NegotiationState,
+  to: NegotiationState
+): boolean {
   return STATE_TRANSITIONS[from]?.includes(to) ?? false;
 }
 
@@ -41,7 +44,7 @@ export function createSession(
   return {
     id: `neg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     listingId,
-    state: 'INIT',
+    state: "INIT",
     initialOffer,
     currentOffer: initialOffer,
     maxPrice,
@@ -60,9 +63,11 @@ export function transitionState(
   newState: NegotiationState
 ): NegotiationSession {
   if (!canTransition(session.state, newState)) {
-    throw new Error(`Invalid state transition: ${session.state} -> ${newState}`);
+    throw new Error(
+      `Invalid state transition: ${session.state} -> ${newState}`
+    );
   }
-  
+
   return {
     ...session,
     state: newState,
@@ -83,7 +88,7 @@ export function addCounterOffer(
     fromSeller,
     timestamp: new Date(),
   };
-  
+
   return {
     ...session,
     counterHistory: [...session.counterHistory, counter],
@@ -95,7 +100,10 @@ export function addCounterOffer(
 /**
  * Check if we should walk away (max price exceeded)
  */
-export function shouldWalkAway(session: NegotiationSession, sellerCounter: number): boolean {
+export function shouldWalkAway(
+  session: NegotiationSession,
+  sellerCounter: number
+): boolean {
   return sellerCounter > session.maxPrice;
 }
 
@@ -108,24 +116,24 @@ export function calculateNextOffer(
   analysis: PriceAnalysis
 ): number {
   const { maxPrice, currentOffer } = session;
-  
+
   // Don't go above max price
   if (sellerCounter <= maxPrice) {
     // Seller's offer is acceptable
     return sellerCounter;
   }
-  
+
   // Calculate midpoint between our last offer and their counter
   const midpoint = Math.round((currentOffer + sellerCounter) / 2);
-  
+
   // But don't exceed our max
   const nextOffer = Math.min(midpoint, maxPrice);
-  
+
   // And ensure we're making progress (at least $5 increase)
   if (nextOffer <= currentOffer) {
     return Math.min(currentOffer + 5, maxPrice);
   }
-  
+
   // Consider fair value - don't go way above it
   const fairCeiling = analysis.fairValueMax * 1.1;
   return Math.min(nextOffer, fairCeiling, maxPrice);
@@ -209,22 +217,27 @@ const MESSAGE_TEMPLATES = {
  * Generate message suggestion
  */
 export function generateMessage(
-  type: 'initial' | 'counter' | 'accept' | 'walkaway',
+  type: "initial" | "counter" | "accept" | "walkaway",
   style: NegotiationStyle,
   offerAmount?: number
 ): SuggestedMessage {
   const templates = MESSAGE_TEMPLATES[type][style];
   const template = templates[Math.floor(Math.random() * templates.length)];
-  
-  const text = offerAmount 
-    ? template.replace('${offer}', `$${offerAmount}`)
+
+  const text = offerAmount
+    ? template.replace("${offer}", `$${offerAmount}`)
     : template;
-  
+
   // Confidence based on type and style match
-  const confidence = type === 'accept' ? 'high' :
-                     type === 'initial' ? 'high' :
-                     type === 'counter' ? 'medium' : 'medium';
-  
+  const confidence =
+    type === "accept"
+      ? "high"
+      : type === "initial"
+      ? "high"
+      : type === "counter"
+      ? "medium"
+      : "medium";
+
   return {
     text,
     type,
@@ -240,49 +253,52 @@ export function determineNextAction(
   session: NegotiationSession,
   sellerCounter?: number,
   analysis?: PriceAnalysis
-): { action: 'counter' | 'accept' | 'walkaway'; amount?: number } {
+): { action: "counter" | "accept" | "walkaway"; amount?: number } {
   if (!sellerCounter) {
-    return { action: 'counter', amount: session.initialOffer };
+    return { action: "counter", amount: session.initialOffer };
   }
-  
+
   // Seller accepted our offer
   if (sellerCounter <= session.currentOffer) {
-    return { action: 'accept' };
+    return { action: "accept" };
   }
-  
+
   // Seller counter is within our max
   if (sellerCounter <= session.maxPrice) {
-    return { action: 'accept' };
+    return { action: "accept" };
   }
-  
+
   // Calculate if we should counter or walk away
   if (analysis) {
     const nextOffer = calculateNextOffer(session, sellerCounter, analysis);
-    
+
     // If we can't improve meaningfully, walk away
-    if (nextOffer >= session.maxPrice && session.currentOffer >= session.maxPrice * 0.95) {
-      return { action: 'walkaway' };
+    if (
+      nextOffer >= session.maxPrice &&
+      session.currentOffer >= session.maxPrice * 0.95
+    ) {
+      return { action: "walkaway" };
     }
-    
-    return { action: 'counter', amount: nextOffer };
+
+    return { action: "counter", amount: nextOffer };
   }
-  
+
   // No analysis, use simple logic
   if (session.counterHistory.length >= 3) {
-    return { action: 'walkaway' };
+    return { action: "walkaway" };
   }
-  
+
   const increment = Math.min(
     Math.round((session.maxPrice - session.currentOffer) / 2),
     20
   );
-  
+
   if (increment < 5) {
-    return { action: 'walkaway' };
+    return { action: "walkaway" };
   }
-  
+
   return {
-    action: 'counter',
+    action: "counter",
     amount: Math.min(session.currentOffer + increment, session.maxPrice),
   };
 }
@@ -291,5 +307,5 @@ export function determineNextAction(
  * Check if negotiation is in terminal state
  */
 export function isTerminalState(state: NegotiationState): boolean {
-  return ['ACCEPTED', 'REJECTED', 'WALKED_AWAY'].includes(state);
+  return ["ACCEPTED", "REJECTED", "WALKED_AWAY"].includes(state);
 }

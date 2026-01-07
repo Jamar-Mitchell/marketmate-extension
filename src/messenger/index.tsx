@@ -1,18 +1,18 @@
 // Content Script Entry Point for Messenger
 
-import React from 'react';
-import { createRoot } from 'react-dom/client';
-import { MessengerOverlay } from '../components/MessengerOverlay';
-import { useStore } from '../store';
-import '../styles/messenger.css';
+import React from "react";
+import { createRoot } from "react-dom/client";
+import { MessengerOverlay } from "../components/MessengerOverlay";
+import { useStore } from "../store";
+import "../styles/messenger.css";
 
-const OVERLAY_CONTAINER_ID = 'marketmate-messenger-root';
+const OVERLAY_CONTAINER_ID = "marketmate-messenger-root";
 
 // Selectors for Messenger input area
 const MESSENGER_INPUT_SELECTORS = [
   '[data-testid="messenger-input-box"]',
   '[role="textbox"][contenteditable="true"]',
-  '.notranslate._5rpu',
+  ".notranslate._5rpu",
   'div[aria-label*="Message"]',
 ];
 
@@ -28,33 +28,36 @@ function findMessengerInput(): Element | null {
 // Create container positioned above input
 function createOverlayContainer(inputElement: Element): HTMLElement {
   let container = document.getElementById(OVERLAY_CONTAINER_ID);
-  
+
   if (!container) {
-    container = document.createElement('div');
+    container = document.createElement("div");
     container.id = OVERLAY_CONTAINER_ID;
-    container.style.cssText = 'position: relative; z-index: 9999;';
-    
+    container.style.cssText = "position: relative; z-index: 9999;";
+
     // Insert before the input's parent container
-    const inputContainer = inputElement.closest('[role="main"]') || inputElement.parentElement;
+    const inputContainer =
+      inputElement.closest('[role="main"]') || inputElement.parentElement;
     if (inputContainer) {
-      inputContainer.insertBefore(container, inputElement.closest('form') || inputElement);
+      inputContainer.insertBefore(
+        container,
+        inputElement.closest("form") || inputElement
+      );
     } else {
       document.body.appendChild(container);
     }
   }
-  
+
   return container;
 }
 
 // Main Messenger App component
 const MessengerApp: React.FC = () => {
-  const { 
+  const {
     negotiation,
-    preferences,
     getNextSuggestion,
     updateNegotiationState,
   } = useStore();
-  
+
   const [suggestion, setSuggestion] = React.useState(getNextSuggestion());
   const [dismissed, setDismissed] = React.useState(false);
 
@@ -62,13 +65,13 @@ const MessengerApp: React.FC = () => {
   React.useEffect(() => {
     const checkNegotiation = async () => {
       // Check storage for active negotiation
-      const stored = await chrome.storage.local.get(['currentNegotiation']);
+      const stored = await chrome.storage.local.get(["currentNegotiation"]);
       if (stored.currentNegotiation) {
         // Could hydrate negotiation state here
         setSuggestion(getNextSuggestion());
       }
     };
-    
+
     checkNegotiation();
   }, [negotiation]);
 
@@ -80,33 +83,33 @@ const MessengerApp: React.FC = () => {
 
   const handleSend = () => {
     if (!suggestion) return;
-    
+
     // Find input and insert message
     const input = findMessengerInput();
     if (input) {
       // For contenteditable divs
       if (input instanceof HTMLElement) {
         input.focus();
-        
+
         // Use execCommand for contenteditable
-        document.execCommand('insertText', false, suggestion.text);
-        
+        document.execCommand("insertText", false, suggestion.text);
+
         // Trigger input event
-        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event("input", { bubbles: true }));
       }
     }
-    
+
     // Update negotiation state
-    if (suggestion.type === 'initial') {
-      updateNegotiationState('OFFER_SENT');
-    } else if (suggestion.type === 'counter') {
-      updateNegotiationState('COUNTER_SENT');
-    } else if (suggestion.type === 'accept') {
-      updateNegotiationState('ACCEPTED');
-    } else if (suggestion.type === 'walkaway') {
-      updateNegotiationState('WALKED_AWAY');
+    if (suggestion.type === "initial") {
+      updateNegotiationState("OFFER_SENT");
+    } else if (suggestion.type === "counter") {
+      updateNegotiationState("COUNTER_SENT");
+    } else if (suggestion.type === "accept") {
+      updateNegotiationState("ACCEPTED");
+    } else if (suggestion.type === "walkaway") {
+      updateNegotiationState("WALKED_AWAY");
     }
-    
+
     setDismissed(true);
   };
 
@@ -119,7 +122,7 @@ const MessengerApp: React.FC = () => {
   }
 
   // Get last seller counter from negotiation
-  const lastCounter = negotiation?.counterHistory.find(c => c.fromSeller);
+  const lastCounter = negotiation?.counterHistory.find((c) => c.fromSeller);
 
   return (
     <MessengerOverlay
@@ -137,10 +140,10 @@ function init() {
   // Wait for Messenger input to appear
   const checkForInput = () => {
     const input = findMessengerInput();
-    
+
     if (input) {
-      console.log('MarketMate: Found Messenger input, initializing overlay');
-      
+      console.log("MarketMate: Found Messenger input, initializing overlay");
+
       const container = createOverlayContainer(input);
       const root = createRoot(container);
       root.render(
@@ -148,10 +151,10 @@ function init() {
           <MessengerApp />
         </React.StrictMode>
       );
-      
+
       return true;
     }
-    
+
     return false;
   };
 
@@ -165,9 +168,9 @@ function init() {
     }
   });
 
-  observer.observe(document.body, { 
-    childList: true, 
-    subtree: true 
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
   });
 
   // Cleanup after 30 seconds if not found
@@ -175,8 +178,8 @@ function init() {
 }
 
 // Wait for DOM
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", init);
 } else {
   init();
 }

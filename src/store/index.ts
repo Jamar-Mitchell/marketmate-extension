@@ -1,16 +1,21 @@
 // Zustand store for MarketMate state management
 
-import { create } from 'zustand';
+import { create } from "zustand";
 import type {
   ExtensionState,
   ListingData,
   PriceAnalysis,
   UserPreferences,
   NegotiationSession,
-  NegotiationStyle,
-} from '../types';
-import { analyzePricing, getMockAnalysis } from '../engine/pricingEngine';
-import { createSession, transitionState, addCounterOffer, generateMessage, determineNextAction } from '../engine/negotiationEngine';
+} from "../types";
+import { analyzePricing, getMockAnalysis } from "../engine/pricingEngine";
+import {
+  createSession,
+  transitionState,
+  addCounterOffer,
+  generateMessage,
+  determineNextAction,
+} from "../engine/negotiationEngine";
 
 interface StoreActions {
   setListing: (listing: ListingData | null) => void;
@@ -21,7 +26,7 @@ interface StoreActions {
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   startNegotiation: (initialOffer: number, maxPrice: number) => void;
-  updateNegotiationState: (state: NegotiationSession['state']) => void;
+  updateNegotiationState: (state: NegotiationSession["state"]) => void;
   addSellerCounter: (amount: number) => void;
   getNextSuggestion: () => ReturnType<typeof generateMessage> | null;
   reset: () => void;
@@ -29,8 +34,8 @@ interface StoreActions {
 
 const DEFAULT_PREFERENCES: UserPreferences = {
   maxSpend: 0,
-  style: 'polite',
-  automationLevel: 'suggest-only',
+  style: "polite",
+  automationLevel: "suggest-only",
   mockMode: false,
 };
 
@@ -53,7 +58,7 @@ export const useStore = create<ExtensionState & StoreActions>((set, get) => ({
 
   analyzeCurrentListing: () => {
     const { listing, preferences } = get();
-    
+
     if (!listing) {
       set({ analysis: null });
       return;
@@ -110,16 +115,28 @@ export const useStore = create<ExtensionState & StoreActions>((set, get) => ({
     const { negotiation, analysis, preferences } = get();
     if (!negotiation) return null;
 
-    const lastCounter = negotiation.counterHistory.length > 0
-      ? negotiation.counterHistory[negotiation.counterHistory.length - 1]
-      : null;
+    const lastCounter =
+      negotiation.counterHistory.length > 0
+        ? negotiation.counterHistory[negotiation.counterHistory.length - 1]
+        : null;
 
-    const sellerCounter = lastCounter?.fromSeller ? lastCounter.amount : undefined;
-    const { action, amount } = determineNextAction(negotiation, sellerCounter, analysis || undefined);
+    const sellerCounter = lastCounter?.fromSeller
+      ? lastCounter.amount
+      : undefined;
+    const { action, amount } = determineNextAction(
+      negotiation,
+      sellerCounter,
+      analysis || undefined
+    );
 
-    const messageType = action === 'accept' ? 'accept' :
-                        action === 'walkaway' ? 'walkaway' :
-                        negotiation.state === 'INIT' ? 'initial' : 'counter';
+    const messageType =
+      action === "accept"
+        ? "accept"
+        : action === "walkaway"
+        ? "walkaway"
+        : negotiation.state === "INIT"
+        ? "initial"
+        : "counter";
 
     return generateMessage(messageType, preferences.style, amount);
   },

@@ -9,7 +9,8 @@
   background: var(--mm-bg, #ffffff);
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
   font-size: 14px;
   color: var(--mm-text, #1c1e21);
   z-index: 9999;
@@ -201,7 +202,7 @@
     max-width: 400px;
     margin-bottom: 0;
   }
-  
+
   @keyframes mm-slide-up {
     from {
       opacity: 0;
