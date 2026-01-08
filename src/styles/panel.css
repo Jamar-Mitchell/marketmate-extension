@@ -25,7 +25,8 @@
   bottom: 20px;
   right: 20px;
   z-index: 999999;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter",
+    sans-serif;
   font-size: 14px;
   color: var(--mm-text);
   background: var(--mm-bg);
@@ -34,15 +35,85 @@
   min-width: 300px;
   max-width: 340px;
   overflow: hidden;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: left 0.3s ease, right 0.3s ease, box-shadow 0.25s ease;
   border: 1px solid var(--mm-border);
+}
+
+/* Snap positioning for expanded panel */
+.mm-panel-expanded.mm-snap-right {
+  right: 20px;
+  left: auto;
+}
+
+.mm-panel-expanded.mm-snap-left {
+  left: 20px;
+  right: auto;
 }
 
 .mm-panel:hover {
   box-shadow: var(--mm-shadow-lg);
 }
 
-/* Collapsed Panel */
+/* Mini Panel (Collapsed - Logo Only) */
+.mm-panel-mini {
+  min-width: auto;
+  max-width: none;
+  width: auto;
+  height: auto;
+  border-radius: var(--mm-radius-sm);
+  padding: 0;
+  display: flex;
+  align-items: stretch;
+  background: linear-gradient(
+    135deg,
+    var(--mm-bg) 0%,
+    var(--mm-bg-secondary) 100%
+  );
+  transition: box-shadow 0.2s ease;
+  user-select: none;
+  overflow: hidden;
+}
+
+.mm-drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 6px;
+  background: var(--mm-bg-tertiary);
+  border-right: 1px solid var(--mm-border);
+  color: var(--mm-text-muted);
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.mm-drag-handle:hover {
+  background: var(--mm-border);
+  color: var(--mm-text-secondary);
+}
+
+.mm-drag-dots {
+  font-size: 14px;
+  letter-spacing: -3px;
+  line-height: 1;
+}
+
+.mm-mini-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.mm-mini-logo:hover {
+  background: var(--mm-bg-secondary);
+}
+
+.mm-panel-mini:hover {
+  box-shadow: var(--mm-shadow-lg);
+}
+
+/* Legacy Collapsed Panel (keeping for reference) */
 .mm-panel-collapsed {
   cursor: default;
 }
@@ -52,7 +123,11 @@
   align-items: center;
   padding: 14px 16px;
   gap: 12px;
-  background: linear-gradient(135deg, var(--mm-bg) 0%, var(--mm-bg-secondary) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--mm-bg) 0%,
+    var(--mm-bg-secondary) 100%
+  );
 }
 
 .mm-header-content {
@@ -154,10 +229,32 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 18px;
-  background: linear-gradient(135deg, var(--mm-bg) 0%, var(--mm-bg-secondary) 100%);
+  padding: 12px 16px;
+  background: linear-gradient(
+    135deg,
+    var(--mm-bg) 0%,
+    var(--mm-bg-secondary) 100%
+  );
   border-bottom: 1px solid var(--mm-border);
-  gap: 12px;
+  gap: 10px;
+}
+
+.mm-expanded-drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 4px;
+  margin: -6px 0 -6px -8px;
+  background: var(--mm-bg-tertiary);
+  border-radius: 6px;
+  color: var(--mm-text-muted);
+  transition: background 0.2s ease, color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.mm-expanded-drag-handle:hover {
+  background: var(--mm-border);
+  color: var(--mm-text-secondary);
 }
 
 .mm-header-buttons {

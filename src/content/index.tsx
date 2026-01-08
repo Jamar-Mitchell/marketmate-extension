@@ -193,22 +193,63 @@ const MarketMateApp: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       });
   };
 
+  // Selectors for Messenger input area (Facebook embedded chat)
+  const MESSENGER_INPUT_SELECTORS = [
+    '[data-testid="messenger-input-box"]',
+    '[role="textbox"][contenteditable="true"]',
+    ".notranslate._5rpu",
+    'div[aria-label*="Message"]',
+    '[aria-label="Message"][role="textbox"]',
+  ];
+
+  // Find Messenger input box
+  const findMessengerInput = (): HTMLElement | null => {
+    for (const selector of MESSENGER_INPUT_SELECTORS) {
+      const element = document.querySelector<HTMLElement>(selector);
+      if (element) return element;
+    }
+    return null;
+  };
+
+  // Check if messenger chat is open
+  const messengerInput = findMessengerInput();
+  const isMessengerOpen = messengerInput !== null;
+
   const handleSendOffer = () => {
     if (!analysis) return;
 
     const offer = preferences.maxSpend || analysis.recommendedOffer;
     startNegotiation(analysis.recommendedOffer, offer);
 
-    // Try to click the "Message" or "Send Message" button on the page
-    const messageButton = document.querySelector<HTMLElement>(
-      '[aria-label="Message"], [aria-label="Send message"], button[data-testid*="message"]'
-    );
+    // Check if messenger is open
+    const input = findMessengerInput();
 
-    if (messageButton) {
-      messageButton.click();
-      showToast("Opening message dialog...");
+    if (input) {
+      // Generate the message
+      const message = generateMessage("initial", preferences.style, offer);
+
+      // Insert message into chat input
+      input.focus();
+
+      // Use execCommand for contenteditable divs
+      document.execCommand("insertText", false, message.text);
+
+      // Trigger input event
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+
+      showToast("✓ Message inserted into chat!");
     } else {
-      showToast("Click 'Message' to start chatting with seller");
+      // Try to click the "Message" or "Send Message" button on the page
+      const messageButton = document.querySelector<HTMLElement>(
+        '[aria-label="Message"], [aria-label="Send message"], button[data-testid*="message"]'
+      );
+
+      if (messageButton) {
+        messageButton.click();
+        showToast("Opening message dialog...");
+      } else {
+        showToast("Click 'Message' to start chatting with seller");
+      }
     }
   };
 
@@ -223,6 +264,7 @@ const MarketMateApp: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       analysis={analysis}
       preferences={preferences}
       expanded={panelExpanded}
+      isMessengerOpen={isMessengerOpen}
       onToggle={togglePanel}
       onMaxPriceChange={(value) => updatePreferences({ maxSpend: value })}
       onStyleChange={(style) => updatePreferences({ style })}
