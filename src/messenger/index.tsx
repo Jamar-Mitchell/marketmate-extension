@@ -52,11 +52,7 @@ function createOverlayContainer(inputElement: Element): HTMLElement {
 
 // Main Messenger App component
 const MessengerApp: React.FC = () => {
-  const {
-    negotiation,
-    getNextSuggestion,
-    updateNegotiationState,
-  } = useStore();
+  const { negotiation, getNextSuggestion, updateNegotiationState } = useStore();
 
   const [suggestion, setSuggestion] = React.useState(getNextSuggestion());
   const [dismissed, setDismissed] = React.useState(false);

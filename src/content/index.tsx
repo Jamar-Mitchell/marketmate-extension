@@ -1,17 +1,48 @@
 // Content Script Entry Point for Facebook Marketplace
 
 import React from "react";
-import { createRoot } from "react-dom/client";
+import { createRoot, Root } from "react-dom/client";
 import { MarketplacePanel } from "../components/MarketplacePanel";
 import { useStore } from "../store";
-import {
-  extractListingData,
-  getMockListingData,
-  observeListingChanges,
-} from "./domExtractor";
+import { extractListingData, getMockListingData } from "./domExtractor";
+import { generateMessage } from "../engine/negotiationEngine";
 import "../styles/panel.css";
 
 const PANEL_CONTAINER_ID = "marketmate-panel-root";
+
+let currentRoot: Root | null = null;
+let lastUrl = "";
+let navigationInterval: ReturnType<typeof setInterval> | null = null;
+
+// Check if we're on an item listing page
+function isListingPage(): boolean {
+  return window.location.pathname.includes("/marketplace/item/");
+}
+
+// Show a toast notification
+function showToast(message: string, type: "success" | "error" = "success") {
+  const toast = document.createElement("div");
+  toast.style.cssText = `
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: ${type === "success" ? "#4CAF50" : "#f44336"};
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    z-index: 999999;
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  `;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = "0";
+    toast.style.transition = "opacity 0.3s";
+    setTimeout(() => toast.remove(), 300);
+  }, 2500);
+}
 
 // Create container for React app
 function createPanelContainer(): HTMLElement {
@@ -26,24 +57,44 @@ function createPanelContainer(): HTMLElement {
   return container;
 }
 
+// Remove the panel
+function removePanel() {
+  const container = document.getElementById(PANEL_CONTAINER_ID);
+  if (container) {
+    if (currentRoot) {
+      currentRoot.unmount();
+      currentRoot = null;
+    }
+    container.remove();
+  }
+}
+
 // Main App component
-const MarketMateApp: React.FC = () => {
+const MarketMateApp: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const {
     listing,
     analysis,
     preferences,
     panelExpanded,
+    negotiation,
     setListing,
     analyzeCurrentListing,
     updatePreferences,
     togglePanel,
     startNegotiation,
     getNextSuggestion,
+    reset,
   } = useStore();
 
-  // Initialize on mount
+  // Initialize on mount and watch for URL changes
   React.useEffect(() => {
     const initialize = () => {
+      // Double-check we're on a listing page before extracting
+      if (!isListingPage()) {
+        return;
+      }
+
+      console.log("MarketMate: Extracting listing data...");
       const data = preferences.mockMode
         ? getMockListingData()
         : extractListingData();
@@ -51,24 +102,46 @@ const MarketMateApp: React.FC = () => {
 
       if (data) {
         analyzeCurrentListing();
-        if (!preferences.maxSpend) {
-          updatePreferences({ maxSpend: Math.round(data.askingPrice * 0.85) });
-        }
+        // Reset maxSpend for new listing
+        updatePreferences({ maxSpend: Math.round(data.askingPrice * 0.85) });
+        console.log(
+          "MarketMate: Listing loaded -",
+          data.title,
+          "at $" + data.askingPrice
+        );
       }
     };
 
     // Initial extraction
     initialize();
+    lastUrl = window.location.href;
 
-    // Watch for SPA navigation
-    const observer = observeListingChanges((newListing) => {
-      if (newListing && newListing.id !== listing?.id) {
-        setListing(newListing);
-        analyzeCurrentListing();
+    // Watch for URL changes (SPA navigation)
+    const checkUrlChange = () => {
+      if (window.location.href !== lastUrl) {
+        console.log("MarketMate: URL changed to", window.location.pathname);
+        lastUrl = window.location.href;
+
+        // Check if still on a listing page
+        if (isListingPage()) {
+          // Small delay to let the page load
+          setTimeout(() => {
+            reset();
+            initialize();
+          }, 800);
+        } else {
+          // Not on a listing page anymore, close panel
+          onClose();
+        }
       }
-    });
+    };
 
-    return () => observer.disconnect();
+    // Poll for URL changes (works better than popstate for SPA)
+    const urlInterval = setInterval(checkUrlChange, 500);
+
+    return () => {
+      clearInterval(urlInterval);
+    };
   }, [preferences.mockMode]);
 
   // Don't render if no listing detected
@@ -77,13 +150,47 @@ const MarketMateApp: React.FC = () => {
   }
 
   const handleSuggestMessage = () => {
-    const suggestion = getNextSuggestion();
-    if (suggestion) {
-      // Copy to clipboard
-      navigator.clipboard.writeText(suggestion.text).then(() => {
-        console.log("MarketMate: Message copied to clipboard");
-      });
+    let messageText: string;
+
+    // If no negotiation started, start one and generate initial message
+    if (!negotiation && analysis) {
+      const offer = preferences.maxSpend || analysis.recommendedOffer;
+      startNegotiation(analysis.recommendedOffer, offer);
+
+      // Generate initial offer message directly
+      const message = generateMessage(
+        "initial",
+        preferences.style,
+        analysis.recommendedOffer
+      );
+      messageText = message.text;
+    } else {
+      // Use existing negotiation flow
+      const suggestion = getNextSuggestion();
+      if (!suggestion) {
+        // Fallback: generate a simple initial message
+        const offer =
+          preferences.maxSpend ||
+          analysis?.recommendedOffer ||
+          Math.round(listing.askingPrice * 0.85);
+        const message = generateMessage("initial", preferences.style, offer);
+        messageText = message.text;
+      } else {
+        messageText = suggestion.text;
+      }
     }
+
+    // Copy to clipboard and show feedback
+    navigator.clipboard
+      .writeText(messageText)
+      .then(() => {
+        console.log("MarketMate: Message copied:", messageText);
+        showToast("✓ Message copied to clipboard!");
+      })
+      .catch((err) => {
+        console.error("MarketMate: Failed to copy", err);
+        showToast("Failed to copy message", "error");
+      });
   };
 
   const handleSendOffer = () => {
@@ -92,12 +199,22 @@ const MarketMateApp: React.FC = () => {
     const offer = preferences.maxSpend || analysis.recommendedOffer;
     startNegotiation(analysis.recommendedOffer, offer);
 
-    // Open Messenger conversation if possible
-    const sellerLink = listing.sellerProfileUrl;
-    if (sellerLink) {
-      // Facebook's internal messaging could be triggered here
-      console.log("MarketMate: Would open conversation with seller");
+    // Try to click the "Message" or "Send Message" button on the page
+    const messageButton = document.querySelector<HTMLElement>(
+      '[aria-label="Message"], [aria-label="Send message"], button[data-testid*="message"]'
+    );
+
+    if (messageButton) {
+      messageButton.click();
+      showToast("Opening message dialog...");
+    } else {
+      showToast("Click 'Message' to start chatting with seller");
     }
+  };
+
+  const handleClose = () => {
+    reset();
+    onClose();
   };
 
   return (
@@ -111,37 +228,66 @@ const MarketMateApp: React.FC = () => {
       onStyleChange={(style) => updatePreferences({ style })}
       onSuggestMessage={handleSuggestMessage}
       onSendOffer={handleSendOffer}
+      onClose={handleClose}
     />
   );
 };
 
-// Initialize the extension
-function init() {
-  // Check if we're on a marketplace item page
-  if (!window.location.pathname.includes("/marketplace/item/")) {
-    console.log("MarketMate: Not on a listing page, waiting...");
+// Initialize the panel on a listing page
+function initPanel() {
+  // Remove any existing panel first
+  removePanel();
 
-    // Watch for navigation to listing pages
-    const observer = new MutationObserver(() => {
-      if (window.location.pathname.includes("/marketplace/item/")) {
-        observer.disconnect();
-        init();
-      }
-    });
+  console.log("MarketMate: Initializing on listing page");
 
-    observer.observe(document.body, { childList: true, subtree: true });
-    return;
-  }
-
-  console.log("MarketMate: Initializing on marketplace listing");
+  // Visual indicator
+  const indicator = document.createElement("div");
+  indicator.style.cssText =
+    "position:fixed;top:10px;left:10px;background:#4CAF50;color:white;padding:10px 15px;border-radius:8px;z-index:999999;font-family:system-ui;font-size:14px;box-shadow:0 2px 10px rgba(0,0,0,0.3);";
+  indicator.textContent = "✓ MarketMate Loaded";
+  document.body.appendChild(indicator);
+  setTimeout(() => indicator.remove(), 2000);
 
   const container = createPanelContainer();
-  const root = createRoot(container);
-  root.render(
+  currentRoot = createRoot(container);
+  lastUrl = window.location.href;
+
+  currentRoot.render(
     <React.StrictMode>
-      <MarketMateApp />
+      <MarketMateApp onClose={removePanel} />
     </React.StrictMode>
   );
+}
+
+// Watch for navigation to listing pages
+function watchForListingPage() {
+  if (navigationInterval) {
+    clearInterval(navigationInterval);
+  }
+
+  navigationInterval = setInterval(() => {
+    if (isListingPage()) {
+      clearInterval(navigationInterval!);
+      navigationInterval = null;
+      // Small delay to let page content load
+      setTimeout(initPanel, 500);
+    }
+  }, 500);
+}
+
+// Main initialization
+function init() {
+  console.log("MarketMate: Content script loaded on", window.location.pathname);
+
+  if (isListingPage()) {
+    // We're on a listing page, initialize the panel
+    // Small delay to ensure page content is loaded
+    setTimeout(initPanel, 500);
+  } else {
+    // Not on a listing page, watch for navigation
+    console.log("MarketMate: Watching for navigation to listing page...");
+    watchForListingPage();
+  }
 }
 
 // Wait for DOM to be ready

@@ -3,49 +3,58 @@
 import type { ListingData } from "../types";
 
 // Selector strategies - Facebook changes DOM frequently, so we use multiple fallbacks
+// These are ordered by specificity - most specific first
 const SELECTORS = {
+  // Price is usually in a prominent span with $ symbol
   price: [
     '[data-testid="marketplace_listing_price"]',
-    'span[dir="auto"]:has-text("$")',
-    ".x1lliihq.x6ikm8r.x10wlt62.x1n2onr6",
-    "span.x193iq5w.xeuugli.x13faqbe.x1vvkbs.xlh3980.xvmahel.x1n0sxbx",
+    // Look for spans containing $ that are likely prices
+    'span[class*="x1lliihq"][class*="x6ikm8r"]',
+    'span[class*="x193iq5w"][class*="xeuugli"]',
   ],
+  // Title is usually the first h1 or prominent span
   title: [
     '[data-testid="marketplace_listing_title"]',
-    "h1 span",
-    "span.x193iq5w.xeuugli.x13faqbe.x1vvkbs.x1xmvt09",
+    'h1 span[class*="x193iq5w"]',
+    "h1",
+    'span[class*="x1heor9g"][class*="x1qlqyl8"]',
   ],
+  // Description area
   description: [
     '[data-testid="marketplace_listing_description"]',
     'div[data-ad-preview="message"]',
-    ".x1iorvi4.x1pi30zi.x1swvt13",
+    'span[class*="x193iq5w"][class*="xeuugli"][class*="x1fj9vlw"]',
   ],
+  // Location text usually contains city, state
   location: [
     '[data-testid="marketplace_listing_location"]',
-    'span:has-text("Listed in")',
-    'a[href*="/marketplace/"][aria-label*="location"]',
+    'span[class*="x1lliihq"][class*="x6ikm8r"]',
   ],
-  condition: [
-    '[data-testid="marketplace_listing_condition"]',
-    'span:has-text("Condition")',
-  ],
-  timeListed: [
-    '[data-testid="marketplace_listing_time"]',
-    'span:has-text("Listed")',
-    "abbr[data-utime]",
-  ],
+  // Condition field
+  condition: ['[data-testid="marketplace_listing_condition"]'],
+  // Time listed text
+  timeListed: ['[data-testid="marketplace_listing_time"]', "abbr[data-utime]"],
+  // Category link
   category: [
     '[data-testid="marketplace_listing_category"]',
     'a[href*="/marketplace/category/"]',
   ],
+  // Seller name
   sellerName: [
     '[data-testid="marketplace_seller_name"]',
     'a[href*="/marketplace/profile/"] span',
+    'span[class*="x193iq5w"][class*="xeuugli"][class*="x1fj9vlw"]',
   ],
-  sellerProfile: ['a[href*="/marketplace/profile/"]'],
+  // Seller profile link
+  sellerProfile: [
+    'a[href*="/marketplace/profile/"]',
+    'a[href*="facebook.com"][class*="x1i10hfl"]',
+  ],
+  // Images
   images: [
     '[data-testid="marketplace_listing_image"] img',
     'img[data-visualcompletion="media-vc-image"]',
+    'img[class*="x1lliihq"]',
   ],
 };
 
@@ -233,54 +242,253 @@ function extractImages(): string[] {
 }
 
 /**
+ * Find price by searching for $ symbol in the page
+ */
+function findPriceInPage(): number {
+  // Look for elements containing price patterns
+  const allSpans = document.querySelectorAll("span");
+  for (const span of allSpans) {
+    const text = span.textContent?.trim() || "";
+    // Match price pattern like $300 or $1,500
+    const priceMatch = text.match(/^\$[\d,]+$/);
+    if (priceMatch) {
+      return parsePrice(text);
+    }
+  }
+  return 0;
+}
+
+/**
+ * Find title - usually the largest/most prominent text
+ */
+function findTitleInPage(): string {
+  // Try h1 first
+  const h1 = document.querySelector("h1");
+  if (h1?.textContent?.trim()) {
+    return h1.textContent.trim();
+  }
+
+  // Look for prominent spans in the right sidebar (Facebook layout)
+  const mainContent = document.querySelector('[role="main"]');
+  if (mainContent) {
+    const spans = mainContent.querySelectorAll("span");
+    for (const span of spans) {
+      const text = span.textContent?.trim() || "";
+      // Title is usually substantial but not too long, and not a price
+      if (
+        text.length > 5 &&
+        text.length < 100 &&
+        !text.startsWith("$") &&
+        !text.includes("Listed")
+      ) {
+        // Check if it looks like a product title
+        const style = window.getComputedStyle(span);
+        const fontSize = parseFloat(style.fontSize);
+        if (fontSize >= 18) {
+          return text;
+        }
+      }
+    }
+  }
+  return "";
+}
+
+/**
+ * Find listing details from the page
+ */
+function findListingDetails(): {
+  condition: string;
+  location: string;
+  daysListed: number;
+  description: string;
+} {
+  let condition = "";
+  let location = "";
+  let daysListed = 0;
+  let description = "";
+
+  // Get all text content and search for patterns
+  const bodyText = document.body.innerText;
+
+  // Find "Listed X days ago" pattern
+  const listedMatch = bodyText.match(
+    /Listed\s+(\d+)\s+(day|week|month)s?\s+ago/i
+  );
+  if (listedMatch) {
+    const num = parseInt(listedMatch[1], 10);
+    const unit = listedMatch[2].toLowerCase();
+    if (unit === "day") daysListed = num;
+    else if (unit === "week") daysListed = num * 7;
+    else if (unit === "month") daysListed = num * 30;
+  }
+
+  // Find condition
+  const conditionMatch = bodyText.match(/Condition\s*[:\-]?\s*([\w\s\-]+)/i);
+  if (conditionMatch) {
+    condition = conditionMatch[1].trim();
+  }
+
+  // Find location (City, STATE pattern)
+  const locationMatch = bodyText.match(
+    /(?:in\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*,\s*[A-Z]{2})/
+  );
+  if (locationMatch) {
+    location = locationMatch[1];
+  }
+
+  // Try to extract description - look for longer text blocks
+  const allDivs = document.querySelectorAll("div, span");
+  for (const el of allDivs) {
+    const text = el.textContent?.trim() || "";
+    if (
+      text.length > 50 &&
+      text.length < 1000 &&
+      !text.includes("Listed") &&
+      !text.includes("Seller information")
+    ) {
+      // Check if this looks like a description (has sentences)
+      if (text.includes(".") || text.includes("!") || text.length > 100) {
+        if (text.length > description.length) {
+          description = text;
+        }
+      }
+    }
+  }
+
+  return { condition, location, daysListed, description };
+}
+
+/**
+ * Find seller name
+ */
+function findSellerName(): string {
+  // Look for seller info section
+  const sellerSection = Array.from(document.querySelectorAll("span")).find(
+    (el) => el.textContent?.includes("Seller information")
+  );
+
+  if (sellerSection) {
+    // The name is usually a nearby link
+    const parent = sellerSection.closest("div");
+    if (parent) {
+      const link = parent.querySelector('a[href*="facebook.com"]');
+      if (link?.textContent?.trim()) {
+        return link.textContent.trim();
+      }
+    }
+  }
+
+  // Fallback: look for profile links
+  const profileLinks = document.querySelectorAll("a");
+  for (const link of profileLinks) {
+    const href = link.getAttribute("href") || "";
+    if (
+      href.includes("/marketplace/profile/") ||
+      href.includes("facebook.com/")
+    ) {
+      const text = link.textContent?.trim() || "";
+      if (
+        text &&
+        text.length > 2 &&
+        text.length < 50 &&
+        !text.includes("http")
+      ) {
+        return text;
+      }
+    }
+  }
+
+  return "";
+}
+
+/**
  * Main extraction function - reads real DOM
+
  */
 export function extractListingData(): ListingData | null {
   try {
-    // Price
-    const priceText = getTextContent(SELECTORS.price);
-    const askingPrice = parsePrice(priceText);
+    console.log("MarketMate: Attempting to extract listing data...");
+
+    // Try selector-based extraction first, then fallback to smart search
+    let priceText = getTextContent(SELECTORS.price);
+    let askingPrice = parsePrice(priceText);
+
+    // Fallback: search page for price
+    if (!askingPrice) {
+      console.log("MarketMate: Using fallback price search...");
+      askingPrice = findPriceInPage();
+    }
 
     if (!askingPrice) {
-      console.warn("MarketMate: Could not extract price");
+      console.warn("MarketMate: Could not extract price from page");
       return null;
     }
 
-    // Title
-    const title = getTextContent(SELECTORS.title);
+    console.log("MarketMate: Found price:", askingPrice);
+
+    // Title - try selectors then fallback
+    let title = getTextContent(SELECTORS.title);
+    if (!title) {
+      title = findTitleInPage();
+    }
+    console.log("MarketMate: Found title:", title);
+
+    // Get additional details using smart search
+    const details = findListingDetails();
 
     // Description
-    const description = getTextContent(SELECTORS.description);
+    let description = getTextContent(SELECTORS.description);
+    if (!description) {
+      description = details.description;
+    }
 
     // Full text for analysis
     const fullText = `${title} ${description}`;
 
     // Location
-    const location = getTextContent(SELECTORS.location);
+    let location = getTextContent(SELECTORS.location);
+    if (!location) {
+      location = details.location;
+    }
 
     // Time listed
+    let daysListed = 0;
     const timeListedText = getTextContent(SELECTORS.timeListed);
-    const daysListed = parseDaysListed(timeListedText);
+    if (timeListedText) {
+      daysListed = parseDaysListed(timeListedText);
+    } else {
+      daysListed = details.daysListed;
+    }
 
     // Category
     const category = getTextContent(SELECTORS.category);
 
-    // Condition
-    const { condition, keywords: conditionKeywords } =
-      detectCondition(fullText);
+    // Condition - from details or detect from text
+    let condition = details.condition;
+    let conditionKeywords: string[] = [];
+    if (!condition) {
+      const detected = detectCondition(fullText);
+      condition = detected.condition;
+      conditionKeywords = detected.keywords;
+    } else {
+      conditionKeywords = [condition.toLowerCase()];
+    }
 
     // Urgency
     const urgencyIndicators = findUrgencyIndicators(fullText);
 
     // Seller info
-    const sellerName = getTextContent(SELECTORS.sellerName);
+    let sellerName = getTextContent(SELECTORS.sellerName);
+    if (!sellerName) {
+      sellerName = findSellerName();
+    }
     const sellerProfileElement = querySelector(SELECTORS.sellerProfile);
     const sellerProfileUrl = sellerProfileElement?.getAttribute("href") || "";
 
     // Images
     const images = extractImages();
 
-    return {
+    const listingData = {
       id: extractListingId(),
       title,
       description,
@@ -301,6 +509,9 @@ export function extractListingData(): ListingData | null {
       images,
       url: window.location.href,
     };
+
+    console.log("MarketMate: Extracted listing data:", listingData);
+    return listingData;
   } catch (error) {
     console.error("MarketMate: Error extracting listing data", error);
     return null;

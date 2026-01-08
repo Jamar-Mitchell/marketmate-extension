@@ -16,6 +16,7 @@ interface MarketplacePanelProps {
   onStyleChange: (style: NegotiationStyle) => void;
   onSuggestMessage: () => void;
   onSendOffer: () => void;
+  onClose: () => void;
 }
 
 export const MarketplacePanel: React.FC<MarketplacePanelProps> = ({
@@ -28,6 +29,7 @@ export const MarketplacePanel: React.FC<MarketplacePanelProps> = ({
   onStyleChange,
   onSuggestMessage,
   onSendOffer,
+  onClose,
 }) => {
   const renderFlexibilityDots = (flexibility: "low" | "medium" | "high") => {
     const dots = {
@@ -53,19 +55,29 @@ export const MarketplacePanel: React.FC<MarketplacePanelProps> = ({
         className="mm-panel mm-panel-collapsed"
         data-testid="mm-panel-collapsed"
       >
-        <div className="mm-header" onClick={onToggle}>
-          <span className="mm-logo">💬 MarketMate</span>
-          <div className="mm-summary">
-            <div>Asking: ${askingPrice}</div>
-            {analysis && (
-              <div>
-                Fair: ${analysis.fairValueMin}–${analysis.fairValueMax}
-              </div>
-            )}
-          </div>
-          <button className="mm-expand-btn" data-testid="mm-expand-btn">
-            View Deal Insights
+        <div className="mm-header">
+          <button 
+            className="mm-close-btn-small" 
+            data-testid="mm-close-btn"
+            onClick={onClose}
+            title="Close MarketMate"
+          >
+            ✕
           </button>
+          <div className="mm-header-content" onClick={onToggle}>
+            <span className="mm-logo">MarketMate</span>
+            <div className="mm-summary">
+              <div>Asking: ${askingPrice}</div>
+              {analysis && (
+                <div>
+                  Fair: ${analysis.fairValueMin}–${analysis.fairValueMax}
+                </div>
+              )}
+            </div>
+            <button className="mm-expand-btn" data-testid="mm-expand-btn">
+              View Deal Insights
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -73,131 +85,122 @@ export const MarketplacePanel: React.FC<MarketplacePanelProps> = ({
 
   return (
     <div className="mm-panel mm-panel-expanded" data-testid="mm-panel-expanded">
-      <div className="mm-header" onClick={onToggle}>
-        <span className="mm-logo">💬 MarketMate</span>
-        <button className="mm-collapse-btn" data-testid="mm-collapse-btn">
-          −
-        </button>
+      <div className="mm-header">
+        <span className="mm-logo" onClick={onToggle} style={{ cursor: 'pointer' }}>MarketMate</span>
+        <div className="mm-header-buttons">
+          <button 
+            className="mm-collapse-btn" 
+            data-testid="mm-collapse-btn"
+            onClick={onToggle}
+            title="Collapse"
+          >
+            −
+          </button>
+          <button 
+            className="mm-close-btn" 
+            data-testid="mm-close-btn"
+            onClick={onClose}
+            title="Close MarketMate"
+          >
+            ✕
+          </button>
+        </div>
       </div>
-
+      
       <div className="mm-divider" />
-
+      
       <div className="mm-content">
         <div className="mm-row">
-          <span className="mm-label">Asking Price:</span>
-          <span className="mm-value" data-testid="mm-asking-price">
-            ${askingPrice}
-          </span>
+          <span className="mm-label">Asking Price</span>
+          <span className="mm-value">${askingPrice}</span>
         </div>
-
+        
         {analysis && (
           <>
             <div className="mm-row">
-              <span className="mm-label">Fair Value Range:</span>
-              <span
-                className="mm-value mm-fair-range"
-                data-testid="mm-fair-range"
-              >
+              <span className="mm-label">Fair Value Range</span>
+              <span className="mm-fair-range">
                 ${analysis.fairValueMin}–${analysis.fairValueMax}
               </span>
             </div>
-
+            
             <div className="mm-row">
-              <span className="mm-label">Seller Flexibility:</span>
-              <span className="mm-value" data-testid="mm-flexibility">
-                {renderFlexibilityDots(analysis.flexibility)}
-              </span>
+              <span className="mm-label">Recommended Offer</span>
+              <span className="mm-recommended">${analysis.recommendedOffer}</span>
             </div>
-
+            
             <div className="mm-row">
-              <span className="mm-label">Recommended Offer:</span>
-              <span
-                className="mm-value mm-recommended"
-                data-testid="mm-recommended"
-              >
-                ${analysis.recommendedOffer}
-              </span>
+              <span className="mm-label">Seller Flexibility</span>
+              {renderFlexibilityDots(analysis.flexibility)}
             </div>
+            
+            <details className="mm-factors">
+              <summary>Price Factors</summary>
+              <ul className="mm-factors-list">
+                {analysis.factors.map((factor: PriceFactor, index: number) => (
+                  <li key={index} className={`mm-factor mm-factor-${factor.impact}`}>
+                    <span>{factor.impact === 'positive' ? '✓' : factor.impact === 'negative' ? '✗' : '•'}</span>
+                    <span>{factor.description}</span>
+                  </li>
+                ))}
+              </ul>
+            </details>
           </>
         )}
-
-        <div className="mm-divider" />
-
+        
         <div className="mm-input-group">
-          <label className="mm-label">Max Price:</label>
+          <label className="mm-label">Your Max Price</label>
           <div className="mm-slider-container">
-            <span className="mm-slider-value">
-              ${preferences.maxSpend || analysis?.fairValueMax || askingPrice}
-            </span>
+            <span className="mm-slider-value">${preferences.maxSpend}</span>
             <input
               type="range"
               className="mm-slider"
-              min={analysis?.fairValueMin || Math.round(askingPrice * 0.5)}
+              min={Math.round(askingPrice * 0.5)}
               max={askingPrice}
-              value={
-                preferences.maxSpend ||
-                analysis?.recommendedOffer ||
-                askingPrice
-              }
-              onChange={(e) => onMaxPriceChange(parseInt(e.target.value, 10))}
+              value={preferences.maxSpend}
+              onChange={(e) => onMaxPriceChange(Number(e.target.value))}
               data-testid="mm-max-price-slider"
             />
           </div>
         </div>
-
+        
         <div className="mm-input-group">
-          <label className="mm-label">Style:</label>
-          <div className="mm-radio-group" data-testid="mm-style-selector">
-            {(["polite", "neutral", "firm"] as NegotiationStyle[]).map(
-              (style) => (
-                <label key={style} className="mm-radio-label">
-                  <input
-                    type="radio"
-                    name="style"
-                    value={style}
-                    checked={preferences.style === style}
-                    onChange={() => onStyleChange(style)}
-                  />
-                  {style.charAt(0).toUpperCase() + style.slice(1)}
-                </label>
-              )
-            )}
+          <label className="mm-label">Negotiation Style</label>
+          <div className="mm-radio-group">
+            {(['polite', 'neutral', 'firm'] as NegotiationStyle[]).map((style) => (
+              <label key={style} className="mm-radio-label">
+                <input
+                  type="radio"
+                  name="negotiation-style"
+                  value={style}
+                  checked={preferences.style === style}
+                  onChange={() => onStyleChange(style)}
+                  data-testid={`mm-style-${style}`}
+                />
+                {style.charAt(0).toUpperCase() + style.slice(1)}
+              </label>
+            ))}
           </div>
         </div>
-
-        {analysis && analysis.factors.length > 0 && (
-          <details className="mm-factors" data-testid="mm-factors">
-            <summary>Why this price?</summary>
-            <ul className="mm-factors-list">
-              {analysis.factors.map((factor: PriceFactor, i: number) => (
-                <li key={i} className={`mm-factor mm-factor-${factor.impact}`}>
-                  • {factor.description}
-                </li>
-              ))}
-            </ul>
-          </details>
-        )}
-
+        
         <div className="mm-actions">
           <button
             className="mm-btn mm-btn-secondary"
             onClick={onSuggestMessage}
             data-testid="mm-suggest-btn"
           >
-            Suggest Message
+            Copy Message
           </button>
           <button
             className="mm-btn mm-btn-primary"
             onClick={onSendOffer}
-            disabled={preferences.automationLevel === "suggest-only"}
-            data-testid="mm-send-btn"
+            disabled={!analysis}
+            data-testid="mm-send-offer-btn"
           >
-            Send Offer
+            Open Messenger
           </button>
         </div>
       </div>
     </div>
   );
 };
-
-export default MarketplacePanel;
